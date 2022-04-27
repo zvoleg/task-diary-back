@@ -19,16 +19,21 @@ func NewRoleRepository(db *sqlx.DB) repositories.RoleRepository {
 }
 
 func (rep *roleRepository) Get(ctx context.Context, identifier uuid.UUID) (*models.RoleResponse, error) {
-	role := new(models.RoleResponse)
+	roleDb := new(models.RoleDb)
 
 	if err := rep.db.QueryRowxContext(
 		ctx,
 		getScript,
 		identifier,
-	).StructScan(role); err != nil {
+	).StructScan(roleDb); err != nil {
 		return nil, errors.Wrap(err, "roleRepo.Get: struct scan error")
 	}
-	return role, nil
+	role := models.RoleResponse{
+		RoleId:      roleDb.RoleId,
+		Name:        roleDb.Name,
+		Description: roleDb.Description,
+	}
+	return &role, nil
 }
 
 func (rep *roleRepository) GetList(ctx context.Context) (*models.AllRoleResponse, error) {
@@ -44,11 +49,16 @@ func (rep *roleRepository) GetList(ctx context.Context) (*models.AllRoleResponse
 	roleList := make([]*models.RoleResponse, 0)
 
 	for rows.Next() {
-		role := new(models.RoleResponse)
-		if err := rows.StructScan(role); err != nil {
+		roleDb := new(models.RoleDb)
+		if err := rows.StructScan(roleDb); err != nil {
 			return nil, errors.Wrap(err, "roleRepo.GetList: struct scan error")
 		}
-		roleList = append(roleList, role)
+		role := models.RoleResponse{
+			RoleId:      roleDb.RoleId,
+			Name:        roleDb.Name,
+			Description: roleDb.Description,
+		}
+		roleList = append(roleList, &role)
 	}
 
 	allRoleResponse := new(models.AllRoleResponse)
