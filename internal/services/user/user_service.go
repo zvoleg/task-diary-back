@@ -10,41 +10,39 @@ import (
 )
 
 type userService struct {
-	repository repositories.UserRepository
+	repo repositories.UserRepository
 }
 
-func NewUserService(repository repositories.UserRepository) services.UserService {
-	return &userService{repository: repository}
+func NewUserService(repo repositories.UserRepository) services.UserService {
+	return &userService{repo: repo}
 }
 
-func (service *userService) Get(ctx context.Context, userId uuid.UUID) (*models.UserResponse, error) {
-	user, err := service.repository.Get(ctx, userId)
+func (serv *userService) Get(ctx context.Context, userId uuid.UUID) (*models.UserResponse, error) {
+	user, err := serv.repo.Get(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-func (service *userService) Create(ctx context.Context, userRequest *models.UserRequest) (*models.UserResponse, error) {
-	user, err := service.repository.Create(ctx, userRequest)
+func (serv *userService) Create(ctx context.Context, userRequest *models.UserRequest) (*models.UserResponse, error) {
+	user, err := serv.repo.Create(ctx, userRequest)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-// Update implements user.Service
-func (service *userService) Update(ctx context.Context, userId uuid.UUID, userRequest *models.UserRequest) (*models.UserResponse, error) {
-	user, err := service.repository.Update(ctx, userId, userRequest)
+func (serv *userService) Update(ctx context.Context, userId uuid.UUID, userRequest *models.UserRequest) (*models.UserResponse, error) {
+	user, err := serv.repo.Update(ctx, userId, userRequest)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-// Delete implements user.Service
-func (service *userService) Delete(ctx context.Context, userId uuid.UUID) error {
-	err := service.repository.Delete(ctx, userId)
+func (serv *userService) Delete(ctx context.Context, userId uuid.UUID) error {
+	err := serv.repo.Delete(ctx, userId)
 	if err != nil {
 		return err
 	}
