@@ -3,6 +3,7 @@ package internal
 import (
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
+	roleController "github.com/zvoleg/task-diary-back/internal/controllers/role"
 	userController "github.com/zvoleg/task-diary-back/internal/controllers/user"
 )
 
@@ -22,6 +23,7 @@ func (app *Application) Init() {
 	v1Group := app.echo.Group("/api/v1")
 
 	userController.RegisterHandlers(v1Group, app.db)
+	roleController.RegisterHandlers(v1Group, app.db)
 }
 
 func (app *Application) Run() {

@@ -10,12 +10,12 @@ import (
 func RegisterHandlers(group *echo.Group, db *sqlx.DB) {
 	userRepo := userRepo.NewUserRepository(db)
 	userServ := userService.NewUserService(userRepo)
-	userController := NewUserController(userServ)
+	userCtrl := NewUserController(userServ)
 
 	usersGroup := group.Group("/users")
 
-	usersGroup.GET("/:user_id", userController.Get())
-	usersGroup.POST("", userController.Create())
-	usersGroup.PUT("/:user_id", userController.Update())
-	usersGroup.DELETE("/:user_id", userController.Delete())
+	usersGroup.GET("/:user_id", userCtrl.Get())
+	usersGroup.POST("", userCtrl.Create())
+	usersGroup.PUT("/:user_id", userCtrl.Update())
+	usersGroup.DELETE("/:user_id", userCtrl.Delete())
 }
