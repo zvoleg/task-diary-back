@@ -16,6 +16,6 @@ type RoleResponse struct {
 	Description string    `json:"description"`
 }
 
-type AllRolesResponse struct {
+type AllRoleResponse struct {
 	Roles []*RoleResponse `json:"data"`
 }
