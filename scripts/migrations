@@ -1,0 +1,2 @@
+migrate -database postgresql://postgres:test@localhost:5432/task-diary-dev?sslmode=disable -path ./migrations/ up 1
+migrate -database postgresql://postgres:test@localhost:5432/task-diary-dev?sslmode=disable -path ./migrations/ down 1
