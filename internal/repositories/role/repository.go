@@ -2,6 +2,7 @@ package role
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -20,26 +21,26 @@ func NewRoleRepository(db *sqlx.DB) repositories.RoleRepository {
 
 func (rep *roleRepository) Get(ctx context.Context, identifier uuid.UUID) (*models.RoleResponse, error) {
 	roleDb := new(models.RoleDb)
-
 	if err := rep.db.QueryRowxContext(
 		ctx,
 		getScript,
 		identifier,
 	).StructScan(roleDb); err != nil {
-		return nil, errors.Wrap(err, "roleRepo.Get: struct scan error")
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, errors.Wrap(models.NewErrNotFoundInDb(identifier), "repo.Role.Get")
+		default:
+			return nil, errors.Wrap(err, "repo.Role.Get: struct scan error")
+		}
 	}
 	role := roleDb.Map()
 	return &role, nil
 }
 
 func (rep *roleRepository) GetList(ctx context.Context) (*models.AllRoleResponse, error) {
-	rows, err := rep.db.QueryxContext(
-		ctx,
-		getListScript,
-	)
-
+	rows, err := rep.db.QueryxContext(ctx, getListScript)
 	if err != nil {
-		return nil, errors.Wrap(err, "roleRepo.GetList: query error")
+		return nil, errors.Wrap(err, "repo.Role.GetList")
 	}
 
 	roleList := make([]*models.RoleResponse, 0)
@@ -47,13 +48,14 @@ func (rep *roleRepository) GetList(ctx context.Context) (*models.AllRoleResponse
 	for rows.Next() {
 		roleDb := new(models.RoleDb)
 		if err := rows.StructScan(roleDb); err != nil {
-			return nil, errors.Wrap(err, "roleRepo.GetList: struct scan error")
+			return nil, errors.Wrap(err, "repo.Role.GetList: struct scan error")
 		}
 		role := roleDb.Map()
 		roleList = append(roleList, &role)
 	}
 
-	allRoleResponse := new(models.AllRoleResponse)
-	allRoleResponse.Roles = roleList
-	return allRoleResponse, nil
+	allRoleResponse := models.AllRoleResponse{
+		Roles: roleList,
+	}
+	return &allRoleResponse, nil
 }
