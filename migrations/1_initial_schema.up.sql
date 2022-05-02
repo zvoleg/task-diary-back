@@ -1,6 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE SCHEMA IF NOT EXISTS administration;
+CREATE SCHEMA IF NOT EXISTS storage;
 CREATE SCHEMA IF NOT EXISTS reference;
 
 CREATE TABLE IF NOT EXISTS administration.users
@@ -14,6 +15,21 @@ CREATE TABLE IF NOT EXISTS administration.users
     updated_at    TIMESTAMP,
     is_deleted    BOOLEAN
 );
+
+CREATE TABLE IF NOT EXISTS storage.tasks
+(
+    task_id       UUID PRIMARY KEY NOT NULL,
+    board_id      UUID NOT NULL,
+    title         VARCHAR(128),
+    description   VARCHAR(512),
+    type          VARCHAR(16),
+    status        VARCHAR(16),
+    author_id     UUID NOT NULL,
+    created_at    TIMESTAMP NOT NULL,
+    updated_at    TIMESTAMP,
+    tags          VARCHAR(128),
+    is_deleted    BOOLEAN
+)
 
 CREATE TABLE IF NOT EXISTS reference.permissions
 (

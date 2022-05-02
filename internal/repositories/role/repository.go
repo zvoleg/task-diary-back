@@ -28,11 +28,7 @@ func (rep *roleRepository) Get(ctx context.Context, identifier uuid.UUID) (*mode
 	).StructScan(roleDb); err != nil {
 		return nil, errors.Wrap(err, "roleRepo.Get: struct scan error")
 	}
-	role := models.RoleResponse{
-		RoleId:      roleDb.RoleId,
-		Name:        roleDb.Name,
-		Description: roleDb.Description,
-	}
+	role := roleDb.Map()
 	return &role, nil
 }
 
@@ -53,11 +49,7 @@ func (rep *roleRepository) GetList(ctx context.Context) (*models.AllRoleResponse
 		if err := rows.StructScan(roleDb); err != nil {
 			return nil, errors.Wrap(err, "roleRepo.GetList: struct scan error")
 		}
-		role := models.RoleResponse{
-			RoleId:      roleDb.RoleId,
-			Name:        roleDb.Name,
-			Description: roleDb.Description,
-		}
+		role := roleDb.Map()
 		roleList = append(roleList, &role)
 	}
 

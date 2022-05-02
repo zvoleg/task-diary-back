@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,7 +21,7 @@ func NewUserRepository(db *sqlx.DB) repositories.UserRepository {
 }
 
 func (rep *userRepository) Create(ctx context.Context, userRequest *models.UserRequest) (*models.UserResponse, error) {
-	user := &models.UserResponse{}
+	userDb := new(models.UserDb)
 	if err := rep.db.QueryRowxContext(
 		ctx,
 		createScript,
@@ -31,10 +32,11 @@ func (rep *userRepository) Create(ctx context.Context, userRequest *models.UserR
 		userRequest.RoleId,
 		time.Now().UTC(),
 		false,
-	).StructScan(user); err != nil {
+	).StructScan(userDb); err != nil {
 		return nil, errors.Wrap(err, "usersRepo.Create.StructScan")
 	}
-	return user, nil
+	user := userDb.Map()
+	return &user, nil
 }
 
 func (rep *userRepository) Update(ctx context.Context, identifier uuid.UUID, userRequest *models.UserRequest) (*models.UserResponse, error) {
@@ -47,12 +49,10 @@ func (rep *userRepository) Update(ctx context.Context, identifier uuid.UUID, use
 		ctx,
 		updateScript,
 		user.UserId,
-		user.AccountId,
 		userRequest.Name,
 		userRequest.Description,
 		userRequest.RoleId,
-		user.CreatedAt,
-		user.IsDeleted,
+		time.Now().UTC(),
 	).StructScan(updatedUser); err != nil {
 		return nil, err
 	}
@@ -68,15 +68,7 @@ func (rep *userRepository) Get(ctx context.Context, identifier uuid.UUID) (*mode
 		return nil, errors.New("userRepo.Get: User not founded")
 	}
 
-	userResponse := models.UserResponse{
-		UserId:      user.UserId,
-		AccountId:   user.AccountId,
-		Name:        user.Name,
-		Description: user.Description,
-		RoleId:      user.RoleId,
-		CreatedAt:   user.CreatedAt,
-		UpdatedAt:   user.UpdatedAt,
-	}
+	userResponse := user.Map()
 	return &userResponse, nil
 }
 
@@ -85,11 +77,11 @@ func (rep *userRepository) GetList(ctx context.Context) ([]*models.AllUserRespon
 }
 
 func (rep *userRepository) Delete(ctx context.Context, identifier uuid.UUID) error {
-	_, err := rep.Get(ctx, identifier)
+	_, err := rep.getDb(ctx, identifier)
 	if err != nil {
 		return err
 	}
-	if _, err := rep.db.Queryx(deleteScript, identifier); err != nil {
+	if _, err := rep.db.Queryx(deleteScript, identifier, time.Now().UTC()); err != nil {
 		return err
 	}
 	return nil
@@ -97,12 +89,18 @@ func (rep *userRepository) Delete(ctx context.Context, identifier uuid.UUID) err
 
 func (rep *userRepository) getDb(ctx context.Context, identifier uuid.UUID) (*models.UserDb, error) {
 	user := new(models.UserDb)
-	if err := rep.db.QueryRowxContext(
+	row := rep.db.QueryRowxContext(
 		ctx,
 		getScript,
 		identifier,
-	).StructScan(user); err != nil {
-		return nil, err
+	)
+	if err := row.StructScan(user); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, &models.ErrNotFoundInDb{Msg: err.Error()}
+		default:
+			return nil, err
+		}
 	}
 	return user, nil
 }
