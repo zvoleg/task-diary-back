@@ -15,5 +15,5 @@ func NewErrNotFoundInDb(identifier uuid.UUID) ErrNotFoundInDb {
 }
 
 func (e ErrNotFoundInDb) Error() string {
-	return fmt.Sprintf("id '%s' not founded", e.identifier)
+	return fmt.Sprintf("id '%s' not found", e.identifier)
 }
