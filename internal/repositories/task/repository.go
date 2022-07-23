@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,13 +22,12 @@ func NewTaskRepository(db *sqlx.DB) repositories.TaskRepository {
 
 // Get implements repositories.TaskRepository
 func (rep *taskRepository) Get(ctx context.Context, identifier uuid.UUID) (*models.TaskResponse, error) {
-	taskDb := new(models.TaskDb)
-	if err := rep.db.QueryRowxContext(
-		ctx,
-		getScript,
-		identifier,
-	).StructScan(taskDb); err != nil {
-		return nil, errors.Wrap(err, "taskRepo.Get: struct scan error")
+	taskDb, err := rep.getTaskDb(ctx, identifier)
+	if err != nil {
+		return nil, errors.Wrap(err, "repo.Task.Get")
+	}
+	if taskDb.IsDeleted {
+		return nil, errors.Wrap(models.NewErrNotFoundInDb(identifier), "repo.Task.Get")
 	}
 	task := taskDb.Map()
 	return &task, nil
@@ -44,30 +44,6 @@ func (rep *taskRepository) Create(ctx context.Context, taskRequest models.TaskRe
 	if err := rep.db.QueryRowxContext(
 		ctx,
 		createScript,
-		uuid.New(),
-		uuid.New(),
-		taskRequest.Title,
-		taskRequest.Description,
-		taskRequest.Type,
-		taskRequest.Status,
-		uuid.New(),
-		time.Now().UTC(),
-		nil,
-		taskRequest.Tags,
-		false,
-	).StructScan(taskDb); err != nil {
-		return nil, errors.Wrap(err, "taskRepo.Create: struct scan error")
-	}
-	task := taskDb.Map()
-	return &task, nil
-}
-
-// Update implements repositories.TaskRepository
-func (rep *taskRepository) Update(ctx context.Context, taskRequest models.TaskRequest) (*models.TaskResponse, error) {
-	taskDb := new(models.TaskDb)
-	if err := rep.db.QueryRowxContext(
-		ctx,
-		updateScript,
 		uuid.New(), // task_id
 		uuid.New(), // board_id should be from context
 		taskRequest.Title,
@@ -76,11 +52,36 @@ func (rep *taskRepository) Update(ctx context.Context, taskRequest models.TaskRe
 		taskRequest.Status,
 		uuid.New(),       // author_id should be from context
 		time.Now().UTC(), // created_at
-		nil,              //modified_at
+		nil,              // updated_at
 		taskRequest.Tags,
 		false, // is_deleted
 	).StructScan(taskDb); err != nil {
-		return nil, errors.Wrap(err, "taskRepo.Update: struct scan error")
+		return nil, errors.Wrap(err, "repo.Task.Create: struct scan error")
+	}
+	task := taskDb.Map()
+	return &task, nil
+}
+
+// Update implements repositories.TaskRepository
+func (rep *taskRepository) Update(ctx context.Context, identifier uuid.UUID, taskRequest models.TaskRequest) (*models.TaskResponse, error) {
+	taskDb, err := rep.getTaskDb(ctx, identifier)
+	if err != nil {
+		return nil, errors.Wrap(err, "repo.Task.Update")
+	}
+	if taskDb.IsDeleted {
+		return nil, errors.Wrap(models.NewErrNotFoundInDb(identifier), "repo.Task.Update")
+	}
+	if err := rep.db.QueryRowxContext(
+		ctx,
+		updateScript,
+		taskRequest.Title,
+		taskRequest.Description,
+		taskRequest.Type,
+		taskRequest.Status,
+		time.Now().UTC(), // updated_at
+		taskRequest.Tags,
+	).StructScan(taskDb); err != nil {
+		return nil, errors.Wrap(err, "repo.Task.Update: struct scan error")
 	}
 	task := taskDb.Map()
 	return &task, nil
@@ -88,5 +89,34 @@ func (rep *taskRepository) Update(ctx context.Context, taskRequest models.TaskRe
 
 // Delete implements repositories.TaskRepository
 func (rep *taskRepository) Delete(ctx context.Context, identifier uuid.UUID) error {
-	panic("unimplemented")
+	_, err := rep.getTaskDb(ctx, identifier)
+	if err != nil {
+		return errors.Wrap(err, "repo.Task.Delete")
+	}
+	if _, err := rep.db.QueryxContext(
+		ctx,
+		deleteScript,
+		identifier,
+		time.Now().UTC(),
+	); err != nil {
+		return errors.Wrap(err, "repo.Task.Delete")
+	}
+	return nil
+}
+
+func (rep *taskRepository) getTaskDb(ctx context.Context, identifier uuid.UUID) (*models.TaskDb, error) {
+	taskDb := new(models.TaskDb)
+	if err := rep.db.QueryRowxContext(
+		ctx,
+		getScript,
+		identifier,
+	).StructScan(taskDb); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, models.NewErrNotFoundInDb(identifier)
+		default:
+			return nil, err
+		}
+	}
+	return taskDb, nil
 }

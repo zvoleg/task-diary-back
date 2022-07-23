@@ -1,13 +1,19 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
 
-var EntityNotFoundInDb = fmt.Errorf("sql: no rows in result set")
+	"github.com/google/uuid"
+)
 
 type ErrNotFoundInDb struct {
-	Msg string
+	identifier uuid.UUID
 }
 
-func (e *ErrNotFoundInDb) Error() string {
-	return e.Msg
+func NewErrNotFoundInDb(identifier uuid.UUID) ErrNotFoundInDb {
+	return ErrNotFoundInDb{identifier: identifier}
+}
+
+func (e ErrNotFoundInDb) Error() string {
+	return fmt.Sprintf("id '%s' not founded", e.identifier)
 }
