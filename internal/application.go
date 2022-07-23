@@ -4,6 +4,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	roleController "github.com/zvoleg/task-diary-back/internal/controllers/role"
+	taskController "github.com/zvoleg/task-diary-back/internal/controllers/task"
 	userController "github.com/zvoleg/task-diary-back/internal/controllers/user"
 )
 
@@ -24,6 +25,7 @@ func (app *Application) Init() {
 
 	userController.RegisterHandlers(v1Group, app.db)
 	roleController.RegisterHandlers(v1Group, app.db)
+	taskController.RegisterHandlers(v1Group, app.db)
 }
 
 func (app *Application) Run() {
