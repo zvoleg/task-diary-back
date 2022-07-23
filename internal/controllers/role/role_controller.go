@@ -1,11 +1,11 @@
 package role
 
 import (
-	"errors"
+	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/gorilla/mux"
 	"github.com/zvoleg/task-diary-back/internal/services"
 )
 
@@ -17,28 +17,31 @@ func NewRoleController(serv services.RoleService) roleController {
 	return roleController{serv: serv}
 }
 
-func (ctrl *roleController) Get() echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-		roleIdStr := ctx.Param("role_id")
+func (ctrl *roleController) Get(w http.ResponseWriter, r *http.Request) {
+	roleIdStr := mux.Vars(r)["role_id"]
 
-		roleId, err := uuid.Parse(roleIdStr)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-		}
-		role, err := ctrl.serv.Get(ctx.Request().Context(), roleId)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusNotFound, errors.Unwrap(err).Error())
-		}
-		return ctx.JSON(http.StatusOK, role)
+	roleId, err := uuid.Parse(roleIdStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
+	role, err := ctrl.serv.Get(roleId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	roleJsonStr, _ := json.Marshal(role)
+	w.WriteHeader(http.StatusOK)
+	w.Write(roleJsonStr)
 }
 
-func (ctrl *roleController) GetList() echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-		allRoles, err := ctrl.serv.GetList(ctx.Request().Context())
-		if err != nil {
-			return echo.NewHTTPError(http.StatusNotFound, errors.Unwrap(err).Error())
-		}
-		return ctx.JSON(http.StatusOK, allRoles)
+func (ctrl *roleController) GetList(w http.ResponseWriter, r *http.Request) {
+	allRoles, err := ctrl.serv.GetList()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	}
+	allRolesJsonStr, _ := json.Marshal(allRoles)
+	w.WriteHeader(http.StatusOK)
+	w.Write(allRolesJsonStr)
 }

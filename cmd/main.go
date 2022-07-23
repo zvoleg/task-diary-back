@@ -11,10 +11,10 @@ import (
 
 func main() {
 	connString := fmt.Sprintf("host=%s port=%v dbname=%s user=%s password=%s sslmode=disable",
-		"localhost",
+		"172.17.0.2",
 		5432,
 		"task-diary-dev",
-		"postgres",
+		"admin",
 		"test",
 	)
 	fmt.Println(connString)

@@ -18,7 +18,8 @@ func NewTaskService(repo repositories.TaskRepository) services.TaskService {
 }
 
 // Create implements services.TaskService
-func (serv *taskService) Create(ctx context.Context, taskRequest models.TaskRequest) (*models.TaskResponse, error) {
+func (serv *taskService) Create(taskRequest models.TaskRequest) (*models.TaskResponse, error) {
+	ctx := context.Background()
 	task, err := serv.repo.Create(ctx, taskRequest)
 	if err != nil {
 		return nil, err
@@ -27,12 +28,14 @@ func (serv *taskService) Create(ctx context.Context, taskRequest models.TaskRequ
 }
 
 // Delete implements services.TaskService
-func (serv *taskService) Delete(ctx context.Context, taskId uuid.UUID) error {
+func (serv *taskService) Delete(taskId uuid.UUID) error {
+	ctx := context.Background()
 	return serv.repo.Delete(ctx, taskId)
 }
 
 // Get implements services.TaskService
-func (serv *taskService) Get(ctx context.Context, taskId uuid.UUID) (*models.TaskResponse, error) {
+func (serv *taskService) Get(taskId uuid.UUID) (*models.TaskResponse, error) {
+	ctx := context.Background()
 	task, err := serv.repo.Get(ctx, taskId)
 	if err != nil {
 		return nil, err
@@ -41,12 +44,13 @@ func (serv *taskService) Get(ctx context.Context, taskId uuid.UUID) (*models.Tas
 }
 
 // GetList implements services.TaskService
-func (serv *taskService) GetList(ctx context.Context) (*models.AllTaskResponse, error) {
+func (serv *taskService) GetList() (*models.AllTaskResponse, error) {
 	return nil, nil
 }
 
 // Update implements services.TaskService
-func (serv *taskService) Update(ctx context.Context, taskId uuid.UUID, taskRequest models.TaskRequest) (*models.TaskResponse, error) {
+func (serv *taskService) Update(taskId uuid.UUID, taskRequest models.TaskRequest) (*models.TaskResponse, error) {
+	ctx := context.Background()
 	task, err := serv.repo.Update(ctx, taskId, taskRequest)
 	if err != nil {
 		return nil, err

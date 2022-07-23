@@ -17,7 +17,8 @@ func NewUserService(repo repositories.UserRepository) services.UserService {
 	return &userService{repo: repo}
 }
 
-func (serv *userService) Get(ctx context.Context, userId uuid.UUID) (*models.UserResponse, error) {
+func (serv *userService) Get(userId uuid.UUID) (*models.UserResponse, error) {
+	ctx := context.Background()
 	user, err := serv.repo.Get(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -25,7 +26,8 @@ func (serv *userService) Get(ctx context.Context, userId uuid.UUID) (*models.Use
 	return user, nil
 }
 
-func (serv *userService) Create(ctx context.Context, userRequest *models.UserRequest) (*models.UserResponse, error) {
+func (serv *userService) Create(userRequest *models.UserRequest) (*models.UserResponse, error) {
+	ctx := context.Background()
 	user, err := serv.repo.Create(ctx, userRequest)
 	if err != nil {
 		return nil, err
@@ -33,7 +35,8 @@ func (serv *userService) Create(ctx context.Context, userRequest *models.UserReq
 	return user, nil
 }
 
-func (serv *userService) Update(ctx context.Context, userId uuid.UUID, userRequest *models.UserRequest) (*models.UserResponse, error) {
+func (serv *userService) Update(userId uuid.UUID, userRequest *models.UserRequest) (*models.UserResponse, error) {
+	ctx := context.Background()
 	user, err := serv.repo.Update(ctx, userId, userRequest)
 	if err != nil {
 		return nil, err
@@ -41,7 +44,8 @@ func (serv *userService) Update(ctx context.Context, userId uuid.UUID, userReque
 	return user, nil
 }
 
-func (serv *userService) Delete(ctx context.Context, userId uuid.UUID) error {
+func (serv *userService) Delete(userId uuid.UUID) error {
+	ctx := context.Background()
 	err := serv.repo.Delete(ctx, userId)
 	if err != nil {
 		return err

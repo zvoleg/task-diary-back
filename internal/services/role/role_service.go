@@ -18,7 +18,8 @@ func NewRoleService(repo repositories.RoleRepository) services.RoleService {
 	return &roleService{repo: repo}
 }
 
-func (serv *roleService) Get(ctx context.Context, roleId uuid.UUID) (*models.RoleResponse, error) {
+func (serv *roleService) Get(roleId uuid.UUID) (*models.RoleResponse, error) {
+	ctx := context.Background()
 	role, err := serv.repo.Get(ctx, roleId)
 	if err != nil {
 		return nil, errors.Wrap(err, "roleServ.Get: can't find role")
@@ -26,7 +27,8 @@ func (serv *roleService) Get(ctx context.Context, roleId uuid.UUID) (*models.Rol
 	return role, nil
 }
 
-func (serv *roleService) GetList(ctx context.Context) (*models.AllRoleResponse, error) {
+func (serv *roleService) GetList() (*models.AllRoleResponse, error) {
+	ctx := context.Background()
 	allRoles, err := serv.repo.GetList(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "roleServ.GetList: can't get role list")

@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS storage.tasks
     updated_at    TIMESTAMP,
     tags          VARCHAR(128),
     is_deleted    BOOLEAN
-)
+);
 
 CREATE TABLE IF NOT EXISTS reference.permissions
 (
