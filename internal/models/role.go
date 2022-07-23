@@ -19,3 +19,11 @@ type RoleResponse struct {
 type AllRoleResponse struct {
 	Roles []*RoleResponse `json:"data"`
 }
+
+func (roleDb *RoleDb) Map() RoleResponse {
+	return RoleResponse{
+		RoleId:      roleDb.RoleId,
+		Name:        roleDb.Name,
+		Description: roleDb.Description,
+	}
+}

@@ -7,9 +7,9 @@ import (
 )
 
 type UserRequest struct {
-	Name        string     `json:"name" db:"name"`
-	Description string     `json:"description" db:"description"`
-	RoleId      *uuid.UUID `json:"role_id" db:"role_id"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	RoleId      *uuid.UUID `json:"role_id"`
 }
 
 type UserDb struct {
@@ -35,4 +35,16 @@ type UserResponse struct {
 
 type AllUserResponse struct {
 	Users []*UserResponse `json:"data"`
+}
+
+func (userDb *UserDb) Map() UserResponse {
+	return UserResponse{
+		UserId:      userDb.UserId,
+		AccountId:   userDb.AccountId,
+		Name:        userDb.Name,
+		Description: userDb.Description,
+		RoleId:      userDb.RoleId,
+		CreatedAt:   userDb.CreatedAt,
+		UpdatedAt:   userDb.UpdatedAt,
+	}
 }

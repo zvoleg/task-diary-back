@@ -17,7 +17,7 @@ func NewUserController(service services.UserService) userController {
 	return userController{serv: service}
 }
 
-func (controller *userController) Get() echo.HandlerFunc {
+func (ctrl *userController) Get() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		userIdStr := ctx.Param("user_id")
 
@@ -25,7 +25,7 @@ func (controller *userController) Get() echo.HandlerFunc {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		user, err := controller.serv.Get(ctx.Request().Context(), userId)
+		user, err := ctrl.serv.Get(ctx.Request().Context(), userId)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusNotFound, err.Error())
 		}
@@ -33,7 +33,7 @@ func (controller *userController) Get() echo.HandlerFunc {
 	}
 }
 
-func (controller *userController) Create() echo.HandlerFunc {
+func (ctrl *userController) Create() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		user := new(models.UserRequest)
 
@@ -41,7 +41,7 @@ func (controller *userController) Create() echo.HandlerFunc {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		userResponse, err := controller.serv.Create(ctx.Request().Context(), user)
+		userResponse, err := ctrl.serv.Create(ctx.Request().Context(), user)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
@@ -49,7 +49,7 @@ func (controller *userController) Create() echo.HandlerFunc {
 	}
 }
 
-func (controller *userController) Update() echo.HandlerFunc {
+func (ctrl *userController) Update() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		userIdStr := ctx.Param("user_id")
 
@@ -62,7 +62,7 @@ func (controller *userController) Update() echo.HandlerFunc {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		userResponse, err := controller.serv.Update(ctx.Request().Context(), userId, user)
+		userResponse, err := ctrl.serv.Update(ctx.Request().Context(), userId, user)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
@@ -70,7 +70,7 @@ func (controller *userController) Update() echo.HandlerFunc {
 	}
 }
 
-func (controller *userController) Delete() echo.HandlerFunc {
+func (ctrl *userController) Delete() echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		userIdStr := ctx.Param("user_id")
 
@@ -78,7 +78,7 @@ func (controller *userController) Delete() echo.HandlerFunc {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		err = controller.serv.Delete(ctx.Request().Context(), userId)
+		err = ctrl.serv.Delete(ctx.Request().Context(), userId)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}

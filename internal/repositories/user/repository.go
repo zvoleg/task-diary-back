@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,7 +21,7 @@ func NewUserRepository(db *sqlx.DB) repositories.UserRepository {
 }
 
 func (rep *userRepository) Create(ctx context.Context, userRequest *models.UserRequest) (*models.UserResponse, error) {
-	user := &models.UserResponse{}
+	userDb := new(models.UserDb)
 	if err := rep.db.QueryRowxContext(
 		ctx,
 		createScript,
@@ -31,52 +32,46 @@ func (rep *userRepository) Create(ctx context.Context, userRequest *models.UserR
 		userRequest.RoleId,
 		time.Now().UTC(),
 		false,
-	).StructScan(user); err != nil {
-		return nil, errors.Wrap(err, "usersRepo.Create.StructScan")
+	).StructScan(userDb); err != nil {
+		return nil, errors.Wrap(err, "repo.User.Create: struct scan error")
 	}
-	return user, nil
+	user := userDb.Map()
+	return &user, nil
 }
 
 func (rep *userRepository) Update(ctx context.Context, identifier uuid.UUID, userRequest *models.UserRequest) (*models.UserResponse, error) {
-	user, err := rep.getDb(ctx, identifier)
+	userDb, err := rep.getUserDb(ctx, identifier)
 	if err != nil {
-		return nil, errors.Wrap(err, "userRepo.Update: user not found")
+		return nil, errors.Wrap(err, "repo.User.Update")
+	}
+	if userDb.IsDeleted {
+		return nil, errors.Wrap(models.NewErrNotFoundInDb(identifier), "repo.User.Update")
 	}
 	updatedUser := new(models.UserResponse)
 	if err = rep.db.QueryRowxContext(
 		ctx,
 		updateScript,
-		user.UserId,
-		user.AccountId,
+		identifier,
 		userRequest.Name,
 		userRequest.Description,
 		userRequest.RoleId,
-		user.CreatedAt,
-		user.IsDeleted,
+		time.Now().UTC(),
 	).StructScan(updatedUser); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "repo.User.Update: struct scan error")
 	}
 	return updatedUser, nil
 }
 
 func (rep *userRepository) Get(ctx context.Context, identifier uuid.UUID) (*models.UserResponse, error) {
-	user, err := rep.getDb(ctx, identifier)
+	user, err := rep.getUserDb(ctx, identifier)
 	if err != nil {
-		return nil, errors.Wrap(err, "userRepo.Get.StructScan")
+		return nil, errors.Wrap(err, "repo.User.Get")
 	}
 	if user.IsDeleted {
-		return nil, errors.New("userRepo.Get: User not founded")
+		return nil, errors.Wrap(models.NewErrNotFoundInDb(identifier), "repo.User.Get")
 	}
 
-	userResponse := models.UserResponse{
-		UserId:      user.UserId,
-		AccountId:   user.AccountId,
-		Name:        user.Name,
-		Description: user.Description,
-		RoleId:      user.RoleId,
-		CreatedAt:   user.CreatedAt,
-		UpdatedAt:   user.UpdatedAt,
-	}
+	userResponse := user.Map()
 	return &userResponse, nil
 }
 
@@ -85,24 +80,30 @@ func (rep *userRepository) GetList(ctx context.Context) ([]*models.AllUserRespon
 }
 
 func (rep *userRepository) Delete(ctx context.Context, identifier uuid.UUID) error {
-	_, err := rep.Get(ctx, identifier)
+	_, err := rep.getUserDb(ctx, identifier)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "repo.User.Delete")
 	}
-	if _, err := rep.db.Queryx(deleteScript, identifier); err != nil {
-		return err
+	if _, err := rep.db.QueryxContext(ctx, deleteScript, identifier, time.Now().UTC()); err != nil {
+		return errors.Wrap(err, "repo.User.Delete")
 	}
 	return nil
 }
 
-func (rep *userRepository) getDb(ctx context.Context, identifier uuid.UUID) (*models.UserDb, error) {
+func (rep *userRepository) getUserDb(ctx context.Context, identifier uuid.UUID) (*models.UserDb, error) {
 	user := new(models.UserDb)
-	if err := rep.db.QueryRowxContext(
+	row := rep.db.QueryRowxContext(
 		ctx,
 		getScript,
 		identifier,
-	).StructScan(user); err != nil {
-		return nil, err
+	)
+	if err := row.StructScan(user); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, models.NewErrNotFoundInDb(identifier)
+		default:
+			return nil, err
+		}
 	}
 	return user, nil
 }
